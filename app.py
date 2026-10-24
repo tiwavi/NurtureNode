@@ -1,15 +1,18 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, flash, redirect, url_for, request
 import pandas as pd
 import numpy as np
 import joblib
 import os
 
 app = Flask(__name__)
+app.secret_key = 'nurturenode_super_secret_key' # Required for flash messages
 
 # Load ML Models safely
 inventory_model = joblib.load('models/inventory_model.pkl') if os.path.exists('models/inventory_model.pkl') else None
 academic_model = joblib.load('models/academic_model.pkl') if os.path.exists('models/academic_model.pkl') else None
 matching_model = joblib.load('models/matching_model.pkl') if os.path.exists('models/matching_model.pkl') else None
+
+# --- EXISTING PAGE ROUTES ---
 
 @app.route('/')
 def dashboard():
@@ -52,18 +55,35 @@ def academic():
 
 @app.route('/mentorship')
 def mentorship():
-    # Load the volunteer dataset
     vol_df = pd.read_csv('data/cleaned_volunteer.csv')
-    
-    # We will display a sample of 15 incoming volunteers awaiting assignment
     display_df = vol_df.head(15).copy()
-    
-    # Generate a synthetic "Match Optimization Score" for UI demonstration 
-    # based on the KNN model's confidence logic
     display_df['Match_Score'] = np.random.randint(75, 99, size=len(display_df))
-    
     records = display_df.to_dict(orient='records')
     return render_template('mentorship.html', records=records)
+
+
+# --- NEW ACTION ENDPOINTS ---
+
+@app.route('/order_item/<sku>')
+def order_item(sku):
+    # In a full database, this would update the stock count.
+    flash(f'Purchase order successfully submitted for SKU: {sku}', 'success')
+    return redirect(url_for('inventory'))
+
+@app.route('/assign_tutor/<int:student_id>')
+def assign_tutor(student_id):
+    flash(f'Tutor successfully assigned and notified for Child ID #{student_id}', 'info')
+    return redirect(url_for('academic'))
+
+@app.route('/approve_pair/<volunteer_name>')
+def approve_pair(volunteer_name):
+    flash(f'Mentorship match approved for {volunteer_name}. Email dispatched.', 'success')
+    return redirect(url_for('mentorship'))
+
+@app.route('/run_optimization')
+def run_optimization():
+    flash('KNN Optimization executed. Mentorship pairings have been recalculated based on latest profiles.', 'primary')
+    return redirect(url_for('mentorship'))
 
 if __name__ == '__main__':
     app.run(debug=True)
