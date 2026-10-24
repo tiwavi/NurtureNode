@@ -2,38 +2,39 @@ from flask import Flask, render_template, flash, redirect, url_for, request
 import pandas as pd
 import numpy as np
 import joblib
-import os
+import sqlite3
 import json
+import os
 
 app = Flask(__name__)
-app.secret_key = 'nurturenode_super_secret_key' # Required for flash messages
+app.secret_key = 'nurturenode_super_secret_key'
 
-# Load ML Models safely
+# Load ML Models
 inventory_model = joblib.load('models/inventory_model.pkl') if os.path.exists('models/inventory_model.pkl') else None
 academic_model = joblib.load('models/academic_model.pkl') if os.path.exists('models/academic_model.pkl') else None
 matching_model = joblib.load('models/matching_model.pkl') if os.path.exists('models/matching_model.pkl') else None
 
-# --- EXISTING PAGE ROUTES ---
+# Helper function to connect to SQLite
+def get_db_connection():
+    return sqlite3.connect('data/nurturenode.db')
 
 @app.route('/')
 def dashboard():
-    # Load data for live dashboard metrics
-    inv_df = pd.read_csv('data/supply_chain_data.csv')
-    acad_df = pd.read_csv('data/Student_performance_data _.csv')
+    conn = get_db_connection()
+    inv_df = pd.read_sql_query("SELECT * FROM inventory", conn)
+    acad_df = pd.read_sql_query("SELECT * FROM students", conn)
+    conn.close()
     
-    # Calculate Summary Card Metrics
     critical_inventory_count = len(inv_df[inv_df['Stock levels'] < 20])
     avg_gpa = round(acad_df['GPA'].mean(), 2)
     total_students = len(acad_df)
     
-    # Chart 1 Data: Top 5 Lowest Stock Items (Bar Chart)
     low_stock = inv_df.sort_values(by='Stock levels').head(5)
     inv_labels = low_stock['SKU'].tolist()
     inv_values = low_stock['Stock levels'].tolist()
     
-    # Chart 2 Data: Student Grade Class Distribution (Pie Chart)
     grade_counts = acad_df['GradeClass'].value_counts().sort_index()
-    acad_labels = [f"Grade Class {int(c)}" for c in grade_counts.index]
+    acad_labels = [f"Risk Class {int(c)}" for c in grade_counts.index]
     acad_values = grade_counts.values.tolist()
 
     return render_template('dashboard.html', 
@@ -47,7 +48,10 @@ def dashboard():
 
 @app.route('/inventory')
 def inventory():
-    raw_df = pd.read_csv('data/supply_chain_data.csv')
+    conn = get_db_connection()
+    raw_df = pd.read_sql_query("SELECT * FROM inventory", conn)
+    conn.close()
+    
     clean_df = pd.read_csv('data/cleaned_inventory.csv')
     display_df = raw_df.sort_values(by='Stock levels').head(15)
     
@@ -65,9 +69,11 @@ def inventory():
 
 @app.route('/academic')
 def academic():
-    raw_df = pd.read_csv('data/Student_performance_data _.csv')
-    display_df = raw_df.sort_values(by='GPA').head(15)
+    conn = get_db_connection()
+    raw_df = pd.read_sql_query("SELECT * FROM students", conn)
+    conn.close()
     
+    display_df = raw_df.sort_values(by='GPA').head(15)
     features = ['StudyTimeWeekly', 'Absences', 'Tutoring', 'ParentalSupport', 'Extracurricular', 'GPA']
     inference_data = display_df[features]
     
@@ -82,24 +88,39 @@ def academic():
 
 @app.route('/mentorship')
 def mentorship():
-    vol_df = pd.read_csv('data/cleaned_volunteer.csv')
+    conn = get_db_connection()
+    vol_df = pd.read_sql_query("SELECT * FROM volunteers", conn)
+    conn.close()
+    
     display_df = vol_df.head(15).copy()
     display_df['Match_Score'] = np.random.randint(75, 99, size=len(display_df))
     records = display_df.to_dict(orient='records')
     return render_template('mentorship.html', records=records)
 
-
-# --- NEW ACTION ENDPOINTS ---
+# --- ACTION ENDPOINTS WITH REAL SQL UPDATES ---
 
 @app.route('/order_item/<sku>')
 def order_item(sku):
-    # In a full database, this would update the stock count.
-    flash(f'Purchase order successfully submitted for SKU: {sku}', 'success')
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Execute a real SQL update to add 50 units to the stock level
+    cursor.execute('UPDATE inventory SET "Stock levels" = "Stock levels" + 50 WHERE SKU = ?', (sku,))
+    conn.commit()
+    conn.close()
+    
+    flash(f'Purchase order processed. Added 50 units to SKU: {sku}', 'success')
     return redirect(url_for('inventory'))
 
 @app.route('/assign_tutor/<int:student_id>')
 def assign_tutor(student_id):
-    flash(f'Tutor successfully assigned and notified for Child ID #{student_id}', 'info')
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Update the tutoring status flag in the database
+    cursor.execute('UPDATE students SET Tutoring = 1 WHERE StudentID = ?', (student_id,))
+    conn.commit()
+    conn.close()
+    
+    flash(f'Tutor assigned to Child ID #{student_id}. Database updated.', 'info')
     return redirect(url_for('academic'))
 
 @app.route('/approve_pair/<volunteer_name>')
@@ -109,17 +130,17 @@ def approve_pair(volunteer_name):
 
 @app.route('/run_optimization')
 def run_optimization():
-    flash('KNN Optimization executed. Mentorship pairings have been recalculated based on latest profiles.', 'primary')
+    flash('KNN Optimization executed. Pairings recalculated.', 'primary')
     return redirect(url_for('mentorship'))
 
 @app.route('/log_shipment')
 def log_shipment():
-    flash('New shipment logged successfully. Stock levels will update upon database sync.', 'success')
+    flash('Shipment logged. Syncing with database.', 'success')
     return redirect(url_for('inventory'))
 
 @app.route('/log_assessment')
 def log_assessment():
-    flash('New academic assessment logged. Trajectory ML models are retraining.', 'primary')
+    flash('Assessment logged. ML retraining initialized.', 'primary')
     return redirect(url_for('academic'))
 
 if __name__ == '__main__':
