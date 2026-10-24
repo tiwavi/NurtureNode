@@ -4,36 +4,106 @@
 <div class="container-fluid">
     <h2 class="mb-4">Executive Dashboard</h2>
     
-    <div class="row">
-        <!-- Placeholder for Inventory Alert -->
+    <!-- Summary Cards -->
+    <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card shadow-sm border-danger">
+            <div class="card shadow-sm border-danger h-100">
                 <div class="card-body">
-                    <h5 class="card-title text-danger">Inventory Alert</h5>
-                    <p class="card-text">Medical supplies projected to deplete in 4 days.</p>
+                    <h5 class="card-title text-danger">Critical Inventory</h5>
+                    <h2 class="display-5 fw-bold">{{ critical_inventory }}</h2>
+                    <p class="card-text text-muted">Items with < 20 units in stock</p>
                 </div>
             </div>
         </div>
-
-        <!-- Placeholder for Academic Alert -->
         <div class="col-md-4">
-            <div class="card shadow-sm border-warning">
+            <div class="card shadow-sm border-warning h-100">
                 <div class="card-body">
-                    <h5 class="card-title text-warning">Academic Flag</h5>
-                    <p class="card-text">3 students flagged for high drop-out risk.</p>
+                    <h5 class="card-title text-warning">Institution Average GPA</h5>
+                    <h2 class="display-5 fw-bold">{{ avg_gpa }}</h2>
+                    <p class="card-text text-muted">Across {{ total_students }} tracked students</p>
                 </div>
             </div>
         </div>
-        
-        <!-- Placeholder for Volunteer Metrics -->
         <div class="col-md-4">
-            <div class="card shadow-sm border-success">
+            <div class="card shadow-sm border-success h-100">
                 <div class="card-body">
                     <h5 class="card-title text-success">Active Matches</h5>
-                    <p class="card-text">12 successful mentor-mentee pairings this month.</p>
+                    <h2 class="display-5 fw-bold">12</h2>
+                    <p class="card-text text-muted">Successful mentor pairings this month</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Visualizations -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Critical Stock Levels (Bottom 5 SKU)</h5>
+                    <canvas id="inventoryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Academic Risk Distribution</h5>
+                    <canvas id="academicChart" height="200"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Parse the JSON data passed from Flask
+    const invLabels = JSON.parse('{{ inv_labels | safe }}');
+    const invValues = JSON.parse('{{ inv_values | safe }}');
+    const acadLabels = JSON.parse('{{ acad_labels | safe }}');
+    const acadValues = JSON.parse('{{ acad_values | safe }}');
+
+    // Render Inventory Bar Chart
+    const ctxInv = document.getElementById('inventoryChart').getContext('2d');
+    new Chart(ctxInv, {
+        type: 'bar',
+        data: {
+            labels: invLabels,
+            datasets: [{
+                label: 'Units in Stock',
+                data: invValues,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Render Academic Pie Chart
+    const ctxAcad = document.getElementById('academicChart').getContext('2d');
+    new Chart(ctxAcad, {
+        type: 'doughnut',
+        data: {
+            labels: acadLabels,
+            datasets: [{
+                data: acadValues,
+                backgroundColor: [
+                    'rgba(25, 135, 84, 0.7)',  // Success
+                    'rgba(13, 110, 253, 0.7)', // Primary
+                    'rgba(255, 193, 7, 0.7)',  // Warning
+                    'rgba(253, 126, 20, 0.7)', // Orange
+                    'rgba(220, 53, 69, 0.7)'   // Danger
+                ]
+            }]
+        },
+        options: { responsive: true }
+    });
+</script>
 {% endblock %}

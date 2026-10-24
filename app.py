@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import json
 
 app = Flask(__name__)
 app.secret_key = 'nurturenode_super_secret_key' # Required for flash messages
@@ -16,7 +17,33 @@ matching_model = joblib.load('models/matching_model.pkl') if os.path.exists('mod
 
 @app.route('/')
 def dashboard():
-    return render_template('dashboard.html')
+    # Load data for live dashboard metrics
+    inv_df = pd.read_csv('data/supply_chain_data.csv')
+    acad_df = pd.read_csv('data/Student_performance_data _.csv')
+    
+    # Calculate Summary Card Metrics
+    critical_inventory_count = len(inv_df[inv_df['Stock levels'] < 20])
+    avg_gpa = round(acad_df['GPA'].mean(), 2)
+    total_students = len(acad_df)
+    
+    # Chart 1 Data: Top 5 Lowest Stock Items (Bar Chart)
+    low_stock = inv_df.sort_values(by='Stock levels').head(5)
+    inv_labels = low_stock['SKU'].tolist()
+    inv_values = low_stock['Stock levels'].tolist()
+    
+    # Chart 2 Data: Student Grade Class Distribution (Pie Chart)
+    grade_counts = acad_df['GradeClass'].value_counts().sort_index()
+    acad_labels = [f"Grade Class {int(c)}" for c in grade_counts.index]
+    acad_values = grade_counts.values.tolist()
+
+    return render_template('dashboard.html', 
+                           critical_inventory=critical_inventory_count,
+                           avg_gpa=avg_gpa,
+                           total_students=total_students,
+                           inv_labels=json.dumps(inv_labels), 
+                           inv_values=json.dumps(inv_values),
+                           acad_labels=json.dumps(acad_labels), 
+                           acad_values=json.dumps(acad_values))
 
 @app.route('/inventory')
 def inventory():
