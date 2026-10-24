@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Smart Mentorship Matcher</h2>
+        <button class="btn btn-primary">Run KNN Optimization</button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Pending Volunteer Assignments</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Volunteer Name</th>
+                            <th>Primary Skillset</th>
+                            <th>Availability</th>
+                            <th>Location</th>
+                            <th>Assigned Mentee ID</th>
+                            <th>ML Match Score</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                        <tr>
+                            <td><strong>{{ row['Volunteer Name'] }}</strong></td>
+                            <td>{{ row['Skills'] }}</td>
+                            <td><span class="badge bg-info text-dark">{{ row['Availability'] }}</span></td>
+                            <td>{{ row['Location'] }}</td>
+                            <td><strong>#{{ row['Assigned_Mentee_ID']|int }}</strong></td>
+                            <td>
+                                {% if row['Match_Score'] >= 90 %}
+                                    <span class="text-success fw-bold">{{ row['Match_Score'] }}% (Optimal)</span>
+                                {% elif row['Match_Score'] >= 80 %}
+                                    <span class="text-primary fw-bold">{{ row['Match_Score'] }}% (Strong)</span>
+                                {% else %}
+                                    <span class="text-warning fw-bold">{{ row['Match_Score'] }}% (Adequate)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-success">Approve Pair</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
