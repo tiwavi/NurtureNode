@@ -15,16 +15,16 @@
             <h4 class="mb-4">NurtureNode</h4>
             <ul class="nav flex-column gap-2">
                 <li class="nav-item">
-                    <a class="nav-link text-white bg-secondary rounded" href="/">Executive Dashboard</a>
+                    <a class="nav-link text-white {% if request.path == '/' %}bg-secondary rounded{% endif %}" href="/">Executive Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="/inventory">Inventory Manager</a>
+                    <a class="nav-link text-white {% if request.path == '/inventory' %}bg-secondary rounded{% endif %}" href="/inventory">Inventory Manager</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="/mentorship">Mentorship Matcher</a>
+                    <a class="nav-link text-white {% if request.path == '/mentorship' %}bg-secondary rounded{% endif %}" href="/mentorship">Mentorship Matcher</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="/academic">Academic Trajectory</a>
+                    <a class="nav-link text-white {% if request.path == '/academic' %}bg-secondary rounded{% endif %}" href="/academic">Academic Trajectory</a>
                 </li>
             </ul>
         </nav>

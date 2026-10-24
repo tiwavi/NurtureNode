@@ -112,5 +112,15 @@ def run_optimization():
     flash('KNN Optimization executed. Mentorship pairings have been recalculated based on latest profiles.', 'primary')
     return redirect(url_for('mentorship'))
 
+@app.route('/log_shipment')
+def log_shipment():
+    flash('New shipment logged successfully. Stock levels will update upon database sync.', 'success')
+    return redirect(url_for('inventory'))
+
+@app.route('/log_assessment')
+def log_assessment():
+    flash('New academic assessment logged. Trajectory ML models are retraining.', 'primary')
+    return redirect(url_for('academic'))
+
 if __name__ == '__main__':
     app.run(debug=True)
