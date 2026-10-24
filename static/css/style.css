@@ -1,14 +1,45 @@
-/* --- Global Styles --- */
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f4f7fa !important;
-    color: #333;
+/* --- Global Theme Variables --- */
+:root {
+    --bg-primary: #f4f7fa;
+    --card-bg: #ffffff;
+    --text-main: #333333;
+    --table-row: #ffffff;
+    --table-hover: #f8f9fc;
+    --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
-/* --- Sidebar Styling --- */
+[data-bs-theme="dark"] {
+    --bg-primary: #12141c;
+    --card-bg: #1e2130;
+    --text-main: #e2e8f0;
+    --table-row: #25283b;
+    --table-hover: #2d3148;
+    --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.4);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* --- Global Layout --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-main) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+main {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Ensure all headings switch colors dynamically */
+main h1, main h2, main h3, main h4, main h5, main h6 {
+    color: var(--text-main) !important;
+}
+
+/* --- Sidebar --- */
 nav {
-    background: linear-gradient(180deg, #1e1e2f 0%, #2a2d43 100%) !important;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(180deg, #161824 0%, #202336 100%) !important;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
     z-index: 1000;
 }
 
@@ -17,104 +48,122 @@ nav {
     transition: all 0.3s ease;
     border-radius: 8px;
     margin-bottom: 5px;
+    color: #a0aec0 !important;
 }
 
 .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(5px);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff !important;
+    transform: translateX(6px);
 }
 
 .nav-link.bg-secondary {
-    background: linear-gradient(90deg, #4e73df 0%, #224abe 100%) !important;
-    box-shadow: 0 4px 10px rgba(78, 115, 223, 0.3);
+    background: linear-gradient(90deg, #4361ee 0%, #3a0ca3 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
 }
 
-/* --- Cards & Dashboard Elements --- */
+/* --- Cards --- */
 .card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+    background-color: var(--card-bg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft) !important;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover) !important;
 }
 
-/* Summary Card Top Borders */
-.border-danger { border-top: 4px solid #dc3545 !important; }
-.border-warning { border-top: 4px solid #ffc107 !important; }
-.border-success { border-top: 4px solid #198754 !important; }
+.card-title {
+    color: var(--text-main);
+    font-weight: 600;
+}
 
-/* --- Table Styling --- */
+/* --- Tables --- */
 .table {
     border-collapse: separate;
     border-spacing: 0 8px;
+    color: var(--text-main);
 }
 
 .table thead th {
     border-bottom: none;
-    background-color: #fff;
+    background-color: transparent !important;
     color: #6c757d;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .table tbody tr {
-    background-color: #fff;
+    background-color: var(--table-row);
     box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    border-radius: 8px;
+    border-radius: 12px;
     transition: all 0.2s ease;
 }
 
 .table tbody tr:hover {
-    background-color: #f8f9fc;
-    transform: scale(1.005);
+    background-color: var(--table-hover);
+    transform: scale(1.01);
 }
 
 .table td, .table th {
     border: none;
     vertical-align: middle;
-    padding: 16px;
+    padding: 18px;
 }
 
-.table td:first-child, .table th:first-child {
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-}
+.table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+.table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
 
-.table td:last-child, .table th:last-child {
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-}
-
-/* --- Buttons & Badges --- */
+/* --- Interactive Elements --- */
 .btn {
     border-radius: 8px;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn:active {
-    transform: scale(0.95);
+.btn-primary {
+    background: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
+    border: none;
+    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
 }
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(67, 97, 238, 0.5);
+}
+
+.btn:active { transform: scale(0.95); }
 
 .badge {
-    padding: 0.5em 0.75em;
-    border-radius: 6px;
+    padding: 0.55em 0.8em;
+    border-radius: 8px;
     font-weight: 600;
 }
 
-/* --- Progress Bars (Inventory ML) --- */
-.progress {
-    background-color: #e9ecef;
-    border-radius: 10px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+/* Pulse animation for critical alerts */
+.badge.bg-danger {
+    animation: pulseRed 2s infinite;
 }
 
-.progress-bar {
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+/* --- Animations --- */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
