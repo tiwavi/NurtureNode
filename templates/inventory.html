@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Predictive Inventory Manager</h2>
+        <button class="btn btn-primary">Log New Shipment</button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Critical Stock Assessment (Top 15 Lowest Levels)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>SKU</th>
+                            <th>Product Type</th>
+                            <th>Current Stock</th>
+                            <th>Lead Time (Days)</th>
+                            <th>Price / Unit</th>
+                            <th>ML Restock Urgency</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                        <tr>
+                            <td><strong>{{ row['SKU'] }}</strong></td>
+                            <td class="text-capitalize">{{ row['Product type'] }}</td>
+                            <td>
+                                {% if row['Stock levels'] < 20 %}
+                                    <span class="badge bg-danger">{{ row['Stock levels'] }} units</span>
+                                {% elif row['Stock levels'] < 50 %}
+                                    <span class="badge bg-warning text-dark">{{ row['Stock levels'] }} units</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ row['Stock levels'] }} units</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ row['Lead times'] }}</td>
+                            <td>${{ row['Price']|round(2) }}</td>
+                            <td>
+                                <!-- Render progress bar based on ML Urgency Prediction -->
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar 
+                                        {% if row['Restock_Urgency'] > 75 %} bg-danger 
+                                        {% elif row['Restock_Urgency'] > 40 %} bg-warning text-dark 
+                                        {% else %} bg-success {% endif %}" 
+                                        role="progressbar" 
+                                        style="width: {{ row['Restock_Urgency'] }}%;" 
+                                        aria-valuenow="{{ row['Restock_Urgency'] }}" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                        {{ row['Restock_Urgency'] }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary">Order</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Executive Dashboard</h2>
+    
+    <div class="row">
+        <!-- Placeholder for Inventory Alert -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Inventory Alert</h5>
+                    <p class="card-text">Medical supplies projected to deplete in 4 days.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placeholder for Academic Alert -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Academic Flag</h5>
+                    <p class="card-text">3 students flagged for high drop-out risk.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Placeholder for Volunteer Metrics -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Active Matches</h5>
+                    <p class="card-text">12 successful mentor-mentee pairings this month.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
