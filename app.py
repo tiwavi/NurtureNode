@@ -1,4 +1,6 @@
 from flask import Flask, render_template, flash, redirect, url_for, request
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import check_password_hash
 import pandas as pd
 import numpy as np
 import joblib
@@ -9,16 +11,66 @@ import os
 app = Flask(__name__)
 app.secret_key = 'nurturenode_super_secret_key'
 
-# Load ML Models
+# --- FLASK-LOGIN SETUP ---
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = "warning"
+
+class User(UserMixin):
+    def __init__(self, id, username, role):
+        self.id = id
+        self.username = username
+        self.role = role
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    if user:
+        return User(id=user[0], username=user[1], role=user[3])
+    return None
+
+# --- DATABASE & ML MODELS ---
+def get_db_connection():
+    return sqlite3.connect('data/nurturenode.db')
+
 inventory_model = joblib.load('models/inventory_model.pkl') if os.path.exists('models/inventory_model.pkl') else None
 academic_model = joblib.load('models/academic_model.pkl') if os.path.exists('models/academic_model.pkl') else None
 matching_model = joblib.load('models/matching_model.pkl') if os.path.exists('models/matching_model.pkl') else None
 
-# Helper function to connect to SQLite
-def get_db_connection():
-    return sqlite3.connect('data/nurturenode.db')
+# --- AUTHENTICATION ROUTES ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        conn.close()
+        
+        if user and check_password_hash(user[2], password):
+            user_obj = User(id=user[0], username=user[1], role=user[3])
+            login_user(user_obj)
+            flash(f'Welcome back, {user_obj.username}! Authenticated as {user_obj.role}.', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password. Please try again.', 'danger')
+            
+    return render_template('login.html')
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out securely.', 'info')
+    return redirect(url_for('login'))
+
+# --- PROTECTED APPLICATION ROUTES ---
 @app.route('/')
+@login_required
 def dashboard():
     conn = get_db_connection()
     inv_df = pd.read_sql_query("SELECT * FROM inventory", conn)
@@ -47,6 +99,7 @@ def dashboard():
                            acad_values=json.dumps(acad_values))
 
 @app.route('/inventory')
+@login_required
 def inventory():
     conn = get_db_connection()
     raw_df = pd.read_sql_query("SELECT * FROM inventory", conn)
@@ -68,6 +121,7 @@ def inventory():
     return render_template('inventory.html', records=records)
 
 @app.route('/academic')
+@login_required
 def academic():
     conn = get_db_connection()
     raw_df = pd.read_sql_query("SELECT * FROM students", conn)
@@ -87,6 +141,7 @@ def academic():
     return render_template('academic.html', records=records)
 
 @app.route('/mentorship')
+@login_required
 def mentorship():
     conn = get_db_connection()
     vol_df = pd.read_sql_query("SELECT * FROM volunteers", conn)
@@ -97,48 +152,53 @@ def mentorship():
     records = display_df.to_dict(orient='records')
     return render_template('mentorship.html', records=records)
 
-# --- ACTION ENDPOINTS WITH REAL SQL UPDATES ---
-
+# --- PROTECTED ACTION ENDPOINTS ---
 @app.route('/order_item/<sku>')
+@login_required
 def order_item(sku):
+    if current_user.role != 'Director':
+        flash('Permission Denied: Only Directors can authorize purchase orders.', 'danger')
+        return redirect(url_for('inventory'))
+        
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Execute a real SQL update to add 50 units to the stock level
     cursor.execute('UPDATE inventory SET "Stock levels" = "Stock levels" + 50 WHERE SKU = ?', (sku,))
     conn.commit()
     conn.close()
-    
     flash(f'Purchase order processed. Added 50 units to SKU: {sku}', 'success')
     return redirect(url_for('inventory'))
 
 @app.route('/assign_tutor/<int:student_id>')
+@login_required
 def assign_tutor(student_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Update the tutoring status flag in the database
     cursor.execute('UPDATE students SET Tutoring = 1 WHERE StudentID = ?', (student_id,))
     conn.commit()
     conn.close()
-    
     flash(f'Tutor assigned to Child ID #{student_id}. Database updated.', 'info')
     return redirect(url_for('academic'))
 
 @app.route('/approve_pair/<volunteer_name>')
+@login_required
 def approve_pair(volunteer_name):
     flash(f'Mentorship match approved for {volunteer_name}. Email dispatched.', 'success')
     return redirect(url_for('mentorship'))
 
 @app.route('/run_optimization')
+@login_required
 def run_optimization():
     flash('KNN Optimization executed. Pairings recalculated.', 'primary')
     return redirect(url_for('mentorship'))
 
 @app.route('/log_shipment')
+@login_required
 def log_shipment():
     flash('Shipment logged. Syncing with database.', 'success')
     return redirect(url_for('inventory'))
 
 @app.route('/log_assessment')
+@login_required
 def log_assessment():
     flash('Assessment logged. ML retraining initialized.', 'primary')
     return redirect(url_for('academic'))

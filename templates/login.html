@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center vh-100" style="margin-left: -250px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="card shadow-lg border-0" style="width: 400px; border-radius: 15px;">
+        <div class="card-body p-5">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary">NurtureNode</h3>
+                <p class="text-muted">Secure Access Portal</p>
+            </div>
+            
+            <form method="POST" action="/login">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" required placeholder="e.g. admin">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Secure Login</button>
+            </form>
+            
+            <div class="mt-4 text-center text-muted small">
+                <p>Authorized Personnel Only.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
