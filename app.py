@@ -5,9 +5,9 @@ import os
 
 app = Flask(__name__)
 
-# Load the trained ML model safely into memory
-MODEL_PATH = 'models/inventory_model.pkl'
-inventory_model = joblib.load(MODEL_PATH) if os.path.exists(MODEL_PATH) else None
+# Load ML Models
+inventory_model = joblib.load('models/inventory_model.pkl') if os.path.exists('models/inventory_model.pkl') else None
+academic_model = joblib.load('models/academic_model.pkl') if os.path.exists('models/academic_model.pkl') else None
 
 @app.route('/')
 def dashboard():
@@ -15,31 +15,42 @@ def dashboard():
 
 @app.route('/inventory')
 def inventory():
-    # Read raw data for human-readable frontend display
     raw_df = pd.read_csv('data/supply_chain_data.csv')
-    # Read cleaned data for machine learning inference
     clean_df = pd.read_csv('data/cleaned_inventory.csv')
     
-    # Sort to show the 15 items with the lowest stock levels first
     display_df = raw_df.sort_values(by='Stock levels').head(15)
     indices = display_df.index
     
-    # Extract the corresponding normalized features for the ML model
     features = ['Price', 'Availability', 'Number of products sold', 'Stock levels', 'Lead times']
     inference_data = clean_df.loc[indices, features]
     
-    # Generate ML Predictions
     if inventory_model:
         preds = inventory_model.predict(inference_data)
-        # Convert the 0-1 scaled output into a percentage-based "Urgency Score"
         display_df['Restock_Urgency'] = [round(p * 100, 1) for p in preds]
     else:
-        display_df['Restock_Urgency'] = "Model missing"
+        display_df['Restock_Urgency'] = 0
         
-    # Convert dataframe to a dictionary for Jinja2 HTML rendering
     records = display_df.to_dict(orient='records')
-    
     return render_template('inventory.html', records=records)
+
+@app.route('/academic')
+def academic():
+    raw_df = pd.read_csv('data/Student_performance_data _.csv')
+    
+    # Sort by lowest GPA to highlight students who need immediate intervention
+    display_df = raw_df.sort_values(by='GPA').head(15)
+    
+    features = ['StudyTimeWeekly', 'Absences', 'Tutoring', 'ParentalSupport', 'Extracurricular', 'GPA']
+    inference_data = display_df[features]
+    
+    if academic_model:
+        preds = academic_model.predict(inference_data)
+        display_df['Risk_Class'] = preds
+    else:
+        display_df['Risk_Class'] = -1
+        
+    records = display_df.to_dict(orient='records')
+    return render_template('academic.html', records=records)
 
 if __name__ == '__main__':
     app.run(debug=True)

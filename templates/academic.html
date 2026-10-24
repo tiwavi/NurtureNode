@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Academic Trajectory Monitor</h2>
+        <button class="btn btn-primary">Log New Assessment</button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Early Intervention Roster (Priority Sort)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Child ID</th>
+                            <th>Age</th>
+                            <th>Current GPA</th>
+                            <th>Absences</th>
+                            <th>Study Time (Hrs/Wk)</th>
+                            <th>ML Trajectory Flag</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in records %}
+                        <tr>
+                            <td><strong>#{{ row['StudentID'] }}</strong></td>
+                            <td>{{ row['Age'] }}</td>
+                            <td>
+                                <strong>{{ row['GPA']|round(2) }}</strong>
+                            </td>
+                            <td>{{ row['Absences'] }} days</td>
+                            <td>{{ row['StudyTimeWeekly']|round(1) }}</td>
+                            <td>
+                                {% if row['Risk_Class'] == 4.0 or row['Risk_Class'] == 3.0 %}
+                                    <span class="badge bg-danger">High Risk (Intervention Req)</span>
+                                {% elif row['Risk_Class'] == 2.0 %}
+                                    <span class="badge bg-warning text-dark">Monitor (Declining)</span>
+                                {% elif row['Risk_Class'] == 1.0 or row['Risk_Class'] == 0.0 %}
+                                    <span class="badge bg-success">Stable / Excelling</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Awaiting Computation</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info">Assign Tutor</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
