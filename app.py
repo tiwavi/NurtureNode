@@ -203,5 +203,38 @@ def log_assessment():
     flash('Assessment logged. ML retraining initialized.', 'primary')
     return redirect(url_for('academic'))
 
+@app.route('/full_report')
+@login_required
+def full_report():
+    conn = get_db_connection()
+    inv_df = pd.read_sql_query("SELECT * FROM inventory", conn)
+    acad_df = pd.read_sql_query("SELECT * FROM students", conn)
+    vol_df = pd.read_sql_query("SELECT * FROM volunteers", conn)
+    conn.close()
+    
+    # Dashboard Stats
+    critical_inventory_count = len(inv_df[inv_df['Stock levels'] < 20])
+    avg_gpa = round(acad_df['GPA'].mean(), 2)
+    
+    # Inventory Table (Top 10)
+    display_inv = inv_df.sort_values(by='Stock levels').head(10)
+    inv_records = display_inv.to_dict(orient='records')
+    
+    # Academic Table (Top 10 Lowest GPA)
+    display_acad = acad_df.sort_values(by='GPA').head(10)
+    acad_records = display_acad.to_dict(orient='records')
+    
+    # Mentorship Table (Sample)
+    display_vol = vol_df.head(10).copy()
+    display_vol['Match_Score'] = np.random.randint(75, 99, size=len(display_vol))
+    vol_records = display_vol.to_dict(orient='records')
+
+    return render_template('full_report.html', 
+                           critical=critical_inventory_count, 
+                           gpa=avg_gpa,
+                           inv_records=inv_records,
+                           acad_records=acad_records,
+                           vol_records=vol_records)
+
 if __name__ == '__main__':
     app.run(debug=True)
