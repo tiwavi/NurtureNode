@@ -2,59 +2,73 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h2 class="mb-4">Executive Dashboard</h2>
     
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm border-danger h-100">
-                <div class="card-body">
-                    <h5 class="card-title text-danger">Critical Inventory</h5>
-                    <h2 class="display-5 fw-bold">{{ critical_inventory }}</h2>
-                    <p class="card-text text-muted">Items with < 20 units in stock</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-warning h-100">
-                <div class="card-body">
-                    <h5 class="card-title text-warning">Institution Average GPA</h5>
-                    <h2 class="display-5 fw-bold">{{ avg_gpa }}</h2>
-                    <p class="card-text text-muted">Across {{ total_students }} tracked students</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-success h-100">
-                <div class="card-body">
-                    <h5 class="card-title text-success">Active Matches</h5>
-                    <h2 class="display-5 fw-bold">12</h2>
-                    <p class="card-text text-muted">Successful mentor pairings this month</p>
-                </div>
-            </div>
-        </div>
+    <!-- Header with Export Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Executive Dashboard</h2>
+        <button class="btn btn-outline-primary" onclick="exportPDF()">
+            Export Monthly Report (PDF)
+        </button>
     </div>
+    
+    <!-- We wrap the content in this ID so the PDF generator knows what to capture -->
+    <div id="report-content" class="p-2">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-danger h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">Critical Inventory</h5>
+                        <h2 class="display-5 fw-bold">{{ critical_inventory }}</h2>
+                        <p class="card-text text-muted">Items with < 20 units in stock</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-warning h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">Institution Average GPA</h5>
+                        <h2 class="display-5 fw-bold">{{ avg_gpa }}</h2>
+                        <p class="card-text text-muted">Across {{ total_students }} tracked students</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-success h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">Active Matches</h5>
+                        <h2 class="display-5 fw-bold">12</h2>
+                        <p class="card-text text-muted">Successful mentor pairings this month</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <!-- Chart.js Visualizations -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Critical Stock Levels (Bottom 5 SKU)</h5>
-                    <canvas id="inventoryChart" height="200"></canvas>
+        <!-- Chart.js Visualizations -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Critical Stock Levels (Bottom 5 SKU)</h5>
+                        <canvas id="inventoryChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Academic Risk Distribution</h5>
+                        <canvas id="academicChart" height="200"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Academic Risk Distribution</h5>
-                    <canvas id="academicChart" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+    </div> <!-- End of report-content -->
 </div>
+
+<!-- Load html2pdf and Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Load Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -105,5 +119,22 @@
         },
         options: { responsive: true }
     });
+</script>
+
+// PDF Export Function
+<script>
+    function exportPDF() {
+        const element = document.getElementById('report-content');
+        const opt = {
+            margin:       0.5,
+            filename:     'NurtureNode_Executive_Report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+        
+        // Generate and download the PDF
+        html2pdf().set(opt).from(element).save();
+    }
 </script>
 {% endblock %}
